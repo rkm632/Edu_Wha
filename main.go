@@ -17,14 +17,17 @@ var client *whatsmeow.Client
 var currentQR string
 
 func main() {
-	// 1. Database setup (Session save karne ke liye)
+	// 1. Database setup
 	dbLog := waLog.Stdout("Database", "ERROR", true)
-	container, err := sqlstore.New("sqlite", "file:store.db?_pragma=foreign_keys(1)", dbLog)
+	
+	// NAYE UPDATE KE HISAB SE YAHAN '1' (maxConnections) ADD KIYA GAYA HAI
+	container, err := sqlstore.New("sqlite", "file:store.db?_pragma=foreign_keys(1)", 1, dbLog)
 	if err != nil {
 		panic(err)
 	}
 
-	deviceStore, err := container.GetFirstDevice()
+	// NAYE UPDATE KE HISAB SE YAHAN 'context.Background()' ADD KIYA GAYA HAI
+	deviceStore, err := container.GetFirstDevice(context.Background())
 	if err != nil {
 		panic(err)
 	}

@@ -63,7 +63,7 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// 2. Status API (Ab isme endpoint URL bhi jayega)
+	// 2. Status API
 	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		status := "Disconnected"
@@ -92,7 +92,8 @@ func main() {
 			return
 		}
 
-		code, err := client.PairPhone(req.Phone, true, whatsmeow.PairClientChrome, "Chrome (Windows)")
+		// FIXED: Yahan context.Background() pehle parameter me add kar diya gaya hai
+		code, err := client.PairPhone(context.Background(), req.Phone, true, whatsmeow.PairClientChrome, "Chrome (Windows)")
 		if err != nil {
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			return
@@ -100,7 +101,7 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"code": code})
 	})
 
-	// 4. Message Send API (Aapke Blogger ya Supabase se request lene ke liye)
+	// 4. Message Send API
 	http.HandleFunc("/api/send", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		var req struct {

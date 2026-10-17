@@ -10,23 +10,23 @@ import (
 	_ "modernc.org/sqlite"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
+	"go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
 var client *whatsmeow.Client
 var currentQR string
 
 func main() {
-	// 1. Database setup
+	// Database setup
 	dbLog := waLog.Stdout("Database", "ERROR", true)
-	
-	// FIXED: Naye update ke hisaab se 'context.Background()' ko pehle argument par set kiya aur '1' hata diya
 	container, err := sqlstore.New(context.Background(), "sqlite", "file:store.db?_pragma=foreign_keys(1)", dbLog)
 	if err != nil {
 		panic(err)
 	}
 
-	// FIXED: Yahan bhi context pass kar diya gaya hai
 	deviceStore, err := container.GetFirstDevice(context.Background())
 	if err != nil {
 		panic(err)
@@ -35,7 +35,7 @@ func main() {
 	clientLog := waLog.Stdout("Client", "ERROR", true)
 	client = whatsmeow.NewClient(deviceStore, clientLog)
 
-	// 2. WhatsApp connection aur QR Code generator
+	// Connection Logic
 	if client.Store.ID == nil {
 		qrChan, _ := client.GetQRChannel(context.Background())
 		err = client.Connect()
@@ -58,12 +58,12 @@ func main() {
 		}
 	}
 
-	// 3. Landing Page (HTML) dikhane ka rasta
+	// 1. Landing Page UI
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// 4. Status aur QR Code check karne ki API
+	// 2. Status API (Ab isme endpoint URL bhi jayega)
 	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		status := "Disconnected"
@@ -72,13 +72,59 @@ func main() {
 		} else if currentQR != "" {
 			status = "QR_Ready"
 		}
+		
+		endpoint := "https://" + r.Host + "/api/send"
 		json.NewEncoder(w).Encode(map[string]string{
-			"status": status,
-			"qr":     currentQR,
+			"status":   status,
+			"qr":       currentQR,
+			"endpoint": endpoint,
 		})
 	})
 
-	// 5. Server Start
+	// 3. Code-Based Login API
+	http.HandleFunc("/api/pair", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var req struct { Phone string `json:"phone"` }
+		json.NewDecoder(r.Body).Decode(&req)
+
+		if client.IsLoggedIn() {
+			json.NewEncoder(w).Encode(map[string]string{"error": "Already logged in"})
+			return
+		}
+
+		code, err := client.PairPhone(req.Phone, true, whatsmeow.PairClientChrome, "Chrome (Windows)")
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{"code": code})
+	})
+
+	// 4. Message Send API (Aapke Blogger ya Supabase se request lene ke liye)
+	http.HandleFunc("/api/send", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var req struct {
+			Phone   string `json:"phone"`
+			Message string `json:"message"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+
+		if !client.IsLoggedIn() {
+			json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "WhatsApp not connected"})
+			return
+		}
+
+		targetJID := types.NewJID(req.Phone, types.DefaultUserServer)
+		msg := &waE2E.Message{Conversation: proto.String(req.Message)}
+		_, err = client.SendMessage(context.Background(), targetJID, msg)
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Message sent!"})
+	})
+
+	// Server Start
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

@@ -3,142 +3,504 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Gateway - EdutaAI</title>
+    <title>EdutaAI - Premium Multi-Tenant Gateway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2 { color: #075e54; text-align: center; margin-bottom: 20px; }
-        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
-        .tab.active { color: #075e54; border-bottom: 3px solid #075e54; }
-        .login-box { text-align: center; display: none; }
-        .login-box.active { display: block; }
-        input[type="text"] { width: 80%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        button { background: #075e54; color: white; border: none; padding: 12px 20px; cursor: pointer; border-radius: 6px; font-size: 16px; font-weight: bold;}
-        button:hover { background: #128C7E; }
-        #qrcode { display: flex; justify-content: center; margin-top: 15px; }
-        .pair-code-display { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #333; margin-top: 15px; background: #e9edef; padding: 15px; border-radius: 8px;}
-        
-        /* Dashboard Dashboard Styling */
-        #dashboard-section { display: none; }
-        .success-box { background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 18px;}
-        .endpoint-box { background: #282c34; color: #61dafb; padding: 15px; border-radius: 6px; text-align: left; overflow-x: auto; font-family: monospace;}
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .bg-glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
+        .gradient-primary { background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); }
+        .gradient-text { background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .tab-active { color: #4f46e5; border-bottom: 2px solid #4f46e5; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
+<body class="text-slate-800 h-screen overflow-hidden flex selection:bg-indigo-100 selection:text-indigo-900">
 
-<div class="container">
-    <h2>WhatsApp Gateway</h2>
-    
-    <!-- LOGIN SECTION -->
-    <div id="login-section">
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('qr')">QR Login</div>
-            <div class="tab" onclick="switchTab('code')">Phone Code Login</div>
-        </div>
-
-        <div id="qr-login" class="login-box active">
-            <p>Scan this QR code from your WhatsApp Linked Devices.</p>
-            <div id="qrcode"></div>
-        </div>
-
-        <div id="code-login" class="login-box">
-            <p>Enter phone number with country code (e.g. 919876543210)</p>
-            <input type="text" id="phoneInput" placeholder="91xxxxxxxxxx">
-            <br>
-            <button onclick="requestPairCode()">Get Pairing Code</button>
-            <div id="pair-code-box" style="display:none;">
-                <p>Enter this code in your WhatsApp notification:</p>
-                <div class="pair-code-display" id="code-display">----</div>
+    <!-- ==========================================
+         1. FULL SCREEN LOGIN OVERLAY
+    =========================================== -->
+    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-40 backdrop-blur-md transition-opacity">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl w-[420px] fade-in border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl shadow-inner shadow-indigo-100">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">EdutaAI Admin</h2>
+                <p class="text-slate-500 text-sm mt-2 font-medium">Enterprise WhatsApp Gateway</p>
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Username</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-4 top-3.5 text-slate-400"></i>
+                        <input type="text" id="adminUser" placeholder="admin" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
+                        <input type="password" id="adminPass" placeholder="••••••••" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                    </div>
+                </div>
+                <button onclick="adminLogin()" class="w-full gradient-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transform hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2">
+                    <span>Secure Login</span> <i class="fa-solid fa-arrow-right text-sm"></i>
+                </button>
+                <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-600 text-sm text-center font-semibold py-3 rounded-xl fade-in"></div>
             </div>
         </div>
     </div>
 
-    <!-- DASHBOARD SECTION -->
-    <div id="dashboard-section">
-        <div class="success-box">✅ WhatsApp Connected Successfully!</div>
+    <!-- ==========================================
+         2. MAIN DASHBOARD LAYOUT
+    =========================================== -->
+    <div id="dashboard-view" class="hidden flex w-full h-full bg-slate-50">
         
-        <h3>Your API Endpoint:</h3>
-        <p>Aap is URL par POST request bhej kar messages send kar sakte hain.</p>
-        <div class="endpoint-box">
-            <b>URL:</b> <span id="endpoint-url"></span><br><br>
-            <b>Method:</b> POST<br>
-            <b>JSON Body:</b><br>
-            {<br>
-            &nbsp;&nbsp;"phone": "919999999999",<br>
-            &nbsp;&nbsp;"message": "Hello from EdutaAI Backend!"<br>
-            }
+        <!-- SIDEBAR -->
+        <aside class="w-72 bg-slate-900 text-slate-300 flex flex-col shadow-2xl z-20">
+            <div class="h-20 flex items-center gap-3 px-8 border-b border-slate-800 bg-slate-950/50">
+                <i class="fa-brands fa-whatsapp text-emerald-400 text-3xl drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]"></i>
+                <div>
+                    <h1 class="text-xl font-extrabold text-white tracking-wide">Eduta<span class="text-emerald-400">AI</span></h1>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mt-0.5">Cloud Gateway</p>
+                </div>
+            </div>
+            <nav class="flex-1 py-8 px-5 space-y-2 overflow-y-auto custom-scroll">
+                <p class="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Main Menu</p>
+                
+                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center gap-3 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium transition shadow-lg shadow-indigo-900/50">
+                    <i class="fa-solid fa-layer-group w-5"></i> Instances
+                </button>
+                <button onclick="switchTab('api')" id="nav-api" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition">
+                    <i class="fa-solid fa-code w-5"></i> API Docs
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition">
+                    <i class="fa-solid fa-gear w-5"></i> Settings
+                </button>
+            </nav>
+            <div class="p-5 border-t border-slate-800 bg-slate-950/30">
+                <div class="flex items-center gap-3 mb-4 px-2">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">AD</div>
+                    <div>
+                        <p class="text-sm font-bold text-white">Admin User</p>
+                        <p class="text-xs text-emerald-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Online</p>
+                    </div>
+                </div>
+                <button onclick="logoutAdmin()" class="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800/80 hover:bg-red-500/20 hover:text-red-400 border border-slate-700 hover:border-red-500/30 text-slate-300 rounded-lg transition font-medium text-sm">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            
+            <!-- HEADER -->
+            <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex justify-between items-center z-10 sticky top-0">
+                <h2 id="header-title" class="text-2xl font-extrabold text-slate-800 tracking-tight">Instances Overview</h2>
+                <div class="flex items-center gap-5">
+                    <div class="hidden md:flex items-center gap-2 px-4 py-1.5 bg-slate-100 rounded-full border border-slate-200">
+                        <span id="global-server-dot" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse"></span>
+                        <span id="global-server-text" class="text-sm font-bold text-slate-600">Connecting Backend...</span>
+                    </div>
+                    <button onclick="openModal('add-device-modal')" class="gradient-primary text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transform hover:-translate-y-0.5 transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Add Account</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB CONTENT CONTAINER -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-8 pb-20">
+                
+                <!-- 🟢 TAB 1: OVERVIEW (INSTANCES) -->
+                <div id="tab-overview" class="fade-in space-y-8 block">
+                    <!-- Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:shadow-md transition">
+                            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl shadow-inner"><i class="fa-solid fa-layer-group"></i></div>
+                            <div><p class="text-slate-500 text-sm font-semibold mb-1">Total Instances</p><p class="text-3xl font-extrabold text-slate-800">1</p></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:shadow-md transition">
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-inner"><i class="fa-solid fa-plug-circle-check"></i></div>
+                            <div><p class="text-slate-500 text-sm font-semibold mb-1">Active Connected</p><p id="stat-active" class="text-3xl font-extrabold text-slate-800">0</p></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:shadow-md transition">
+                            <div class="w-14 h-14 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-2xl shadow-inner"><i class="fa-solid fa-bolt"></i></div>
+                            <div><p class="text-slate-500 text-sm font-semibold mb-1">API Endpoint</p><p class="text-xs font-mono font-bold text-slate-600 mt-1 bg-slate-100 p-1 rounded truncate w-40" id="stat-endpoint">Loading...</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="font-bold text-slate-800">Hosted WhatsApp Accounts</h3>
+                            <button onclick="checkStatus()" class="text-indigo-600 text-sm font-bold hover:text-indigo-800"><i class="fa-solid fa-rotate-right mr-1"></i> Refresh</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                                        <th class="p-4 pl-6 font-bold w-16">ID</th>
+                                        <th class="p-4 font-bold">Instance Name</th>
+                                        <th class="p-4 font-bold">Connection Status</th>
+                                        <th class="p-4 font-bold">API Access</th>
+                                        <th class="p-4 font-bold text-right pr-6">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="accounts-table-body" class="text-sm divide-y divide-slate-100">
+                                    <tr class="hover:bg-slate-50 transition group">
+                                        <td class="p-4 pl-6 font-mono text-slate-400 font-bold">#1</td>
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-robot"></i></div>
+                                                <div>
+                                                    <p class="font-bold text-slate-800">Primary Library Bot</p>
+                                                    <p class="text-xs text-slate-500">Default Aiven DB</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span id="tbl-status-badge" class="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200 shadow-sm flex inline-flex items-center gap-1.5 w-max">
+                                                <i class="fa-solid fa-spinner fa-spin"></i> Checking
+                                            </span>
+                                        </td>
+                                        <td class="p-4 text-slate-600 font-mono text-xs">Ready</td>
+                                        <td class="p-4 text-right pr-6 space-x-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onclick="openTestModal()" class="bg-sky-50 text-sky-600 hover:bg-sky-500 hover:text-white px-3 py-2 rounded-lg transition shadow-sm font-semibold text-xs"><i class="fa-solid fa-paper-plane mr-1"></i> Test</button>
+                                            <button class="bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-3 py-2 rounded-lg transition shadow-sm font-semibold text-xs"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🟢 TAB 2: API DOCS -->
+                <div id="tab-api" class="fade-in hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-800">Send Message API</h3>
+                            <p class="text-slate-500 text-sm mt-1">Use this endpoint to send text messages dynamically.</p>
+                        </div>
+                        <div class="p-6 bg-slate-900 text-slate-300 font-mono text-sm overflow-x-auto relative">
+                            <button class="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"><i class="fa-regular fa-copy mr-1"></i> Copy</button>
+                            <div class="mb-4">
+                                <span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 font-bold rounded mr-2">POST</span> 
+                                <span id="docs-endpoint" class="text-sky-400">https://your-server.onrender.com/api/send</span>
+                            </div>
+                            <p class="text-slate-500 mb-2">// JSON Payload Structure</p>
+                            <pre class="text-emerald-300">
+{
+  <span class="text-sky-300">"phone"</span>: <span class="text-orange-300">"919876543210"</span>, <span class="text-slate-500">// With Country Code</span>
+  <span class="text-sky-300">"message"</span>: <span class="text-orange-300">"Hello from EdutaAI Gateway! 🚀"</span>
+}
+                            </pre>
+                            <p class="text-slate-500 mt-6 mb-2">// Success Response (200 OK)</p>
+                            <pre class="text-slate-300">
+{
+  <span class="text-sky-300">"status"</span>: <span class="text-orange-300">"success"</span>,
+  <span class="text-sky-300">"message"</span>: <span class="text-orange-300">"Message sent!"</span>
+}
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🟢 TAB 3: SETTINGS -->
+                <div id="tab-settings" class="fade-in hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-2xl">
+                        <h3 class="text-xl font-bold text-slate-800 mb-6">Gateway Settings</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Incoming Webhook URL <span class="text-xs font-normal text-slate-500">(Optional)</span></label>
+                                <input type="text" placeholder="https://your-supabase-function.com/webhook" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <p class="text-xs text-slate-500 mt-2">Where should we forward incoming WhatsApp messages?</p>
+                            </div>
+                            <hr class="border-slate-100">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Auto-Reconnect</label>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-6 bg-indigo-600 rounded-full relative cursor-pointer shadow-inner">
+                                        <div class="w-4 h-4 bg-white rounded-full absolute right-1 top-1 shadow"></div>
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-600">Enabled</span>
+                                </div>
+                            </div>
+                            <button class="gradient-primary text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         3. MODALS (Popups)
+    =========================================== -->
+    
+    <!-- ADD ACCOUNT MODAL -->
+    <div id="add-device-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-[650px] max-w-[95%] overflow-hidden flex flex-col transform scale-95 transition-transform" id="add-device-box">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-800">Link WhatsApp Account</h3>
+                    <p class="text-sm text-slate-500 font-medium">Choose a connection method below</p>
+                </div>
+                <button onclick="closeModal('add-device-modal')" class="w-10 h-10 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full flex items-center justify-center transition text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="p-8 bg-slate-50 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- QR Box -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+                    <p class="font-extrabold text-slate-800 mb-1 text-lg">QR Code Method</p>
+                    <p class="text-xs text-slate-500 mb-5 font-medium">WhatsApp > Linked Devices > Link</p>
+                    <div class="bg-slate-50 p-3 rounded-xl inline-block border border-slate-100 shadow-inner">
+                        <div id="qrcode" class="flex justify-center"></div>
+                    </div>
+                    <p id="qr-status-msg" class="text-xs font-bold text-indigo-600 mt-4 bg-indigo-50 py-1.5 px-3 rounded-lg inline-block"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Generating...</p>
+                </div>
+                
+                <!-- Code Box -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center relative overflow-hidden flex flex-col">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                    <p class="font-extrabold text-slate-800 mb-1 text-lg">Phone Code Method</p>
+                    <p class="text-xs text-slate-500 mb-5 font-medium">Get 8-character pairing code</p>
+                    
+                    <div class="flex-1 flex flex-col justify-center gap-3">
+                        <input type="text" id="phonePairInput" placeholder="Ex: 919876543210" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none text-center tracking-wider">
+                        <button onclick="requestPairCode()" class="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2.5 rounded-xl text-sm font-bold shadow-md transition">Generate Code</button>
+                    </div>
+                    <div id="code-display" class="mt-4 text-3xl font-black tracking-[0.25em] text-slate-800 bg-slate-100 py-3 rounded-xl border border-slate-200 hidden shadow-inner uppercase"></div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
+    <!-- TEST MESSAGE MODAL -->
+    <div id="test-msg-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-[450px] max-w-[95%] p-8 transform scale-95 transition-transform" id="test-msg-box">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-paper-plane text-indigo-600"></i> Send Test</h3>
+                <button onclick="closeModal('test-msg-modal')" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Target Phone</label>
+                    <input type="text" id="testPhone" placeholder="919876543210" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Message</label>
+                    <textarea id="testText" rows="3" placeholder="Hello from Admin Dashboard..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                </div>
+                <button onclick="fireTestMessage()" id="btn-fire-test" class="w-full gradient-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition flex justify-center items-center gap-2">
+                    Send Now
+                </button>
+                <div id="test-result" class="text-center font-bold text-sm hidden py-2 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+
+<!-- ==========================================
+     4. JAVASCRIPT LOGIC
+=========================================== -->
 <script>
     let qrCodeObj = null;
 
-    function switchTab(tab) {
-        document.getElementById('qr-login').classList.remove('active');
-        document.getElementById('code-login').classList.remove('active');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        
-        if(tab === 'qr') {
-            document.getElementById('qr-login').classList.add('active');
-            document.querySelectorAll('.tab')[0].classList.add('active');
-        } else {
-            document.getElementById('code-login').classList.add('active');
-            document.querySelectorAll('.tab')[1].classList.add('active');
+    // --- Core Auth & Tab Logic ---
+    window.onload = () => {
+        if (localStorage.getItem('adminToken') === 'eduta-ai-premium-token') {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            startStatusEngine();
         }
     }
 
-    async function requestPairCode() {
-        let phone = document.getElementById('phoneInput').value;
-        if(!phone) return alert("Please enter phone number!");
+    async function adminLogin() {
+        let btn = event.currentTarget;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         
-        document.getElementById('code-display').innerText = "Loading...";
-        document.getElementById('pair-code-box').style.display = "block";
+        let u = document.getElementById('adminUser').value;
+        let p = document.getElementById('adminPass').value;
+        
+        try {
+            let res = await fetch('/api/login', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
+            let data = await res.json();
+            if(data.status === 'success') {
+                localStorage.setItem('adminToken', data.token);
+                window.location.reload();
+            } else {
+                showLoginError(data.message);
+                btn.innerHTML = '<span>Secure Login</span> <i class="fa-solid fa-arrow-right text-sm"></i>';
+            }
+        } catch(e) {
+            showLoginError("Network Error. Cannot connect to Go backend.");
+            btn.innerHTML = '<span>Secure Login</span> <i class="fa-solid fa-arrow-right text-sm"></i>';
+        }
+    }
 
-        let res = await fetch('/api/pair', {
-            method: 'POST',
-            body: JSON.stringify({phone: phone})
+    function showLoginError(msg) {
+        let err = document.getElementById('login-error');
+        err.innerText = msg;
+        err.classList.remove('hidden');
+    }
+
+    function logoutAdmin() {
+        localStorage.removeItem('adminToken');
+        window.location.reload();
+    }
+
+    function switchTab(tabId) {
+        // Update Nav Buttons
+        ['overview', 'api', 'settings'].forEach(id => {
+            let btn = document.getElementById('nav-' + id);
+            btn.className = "w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition";
         });
-        let data = await res.json();
+        let activeBtn = document.getElementById('nav-' + tabId);
+        activeBtn.className = "w-full flex items-center gap-3 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium transition shadow-lg shadow-indigo-900/50";
         
-        if(data.code) {
-            document.getElementById('code-display').innerText = data.code;
-        } else {
-            document.getElementById('code-display').innerText = "Error!";
-            alert(data.error);
-        }
+        // Update Title
+        const titles = { 'overview': 'Instances Overview', 'api': 'API Documentation', 'settings': 'System Settings' };
+        document.getElementById('header-title').innerText = titles[tabId];
+
+        // Toggle Content
+        ['tab-overview', 'tab-api', 'tab-settings'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('tab-' + tabId).classList.remove('hidden');
     }
 
+    // --- Modal Logic ---
+    function openModal(id) {
+        let modal = document.getElementById(id);
+        let box = modal.querySelector('div');
+        modal.classList.remove('hidden');
+        // Trigger reflow
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+        box.classList.remove('scale-95');
+    }
+
+    function closeModal(id) {
+        let modal = document.getElementById(id);
+        let box = modal.querySelector('div');
+        modal.classList.add('opacity-0');
+        box.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    function openTestModal() { openModal('test-msg-modal'); }
+
+    // --- WhatsApp Engine API Calls ---
+    async function requestPairCode() {
+        let phone = document.getElementById('phonePairInput').value;
+        if(!phone) return alert('Please enter phone number');
+        
+        let disp = document.getElementById('code-display');
+        disp.innerText = "..."; disp.classList.remove('hidden');
+        
+        try {
+            let res = await fetch('/api/pair', { method: 'POST', body: JSON.stringify({phone: phone}) });
+            let data = await res.json();
+            disp.innerText = data.code ? data.code : "ERR";
+        } catch(e) { disp.innerText = "FAIL"; }
+    }
+
+    async function fireTestMessage() {
+        let phone = document.getElementById('testPhone').value;
+        let msg = document.getElementById('testText').value;
+        let btn = document.getElementById('btn-fire-test');
+        let resDiv = document.getElementById('test-result');
+        
+        if(!phone || !msg) return;
+
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+        resDiv.classList.add('hidden');
+
+        try {
+            let res = await fetch('/api/send', { method: 'POST', body: JSON.stringify({phone: phone, message: msg}) });
+            let data = await res.json();
+            
+            resDiv.classList.remove('hidden', 'bg-red-50', 'text-red-600', 'bg-green-50', 'text-green-600');
+            if(data.status === 'success') {
+                resDiv.innerText = "Message Delivered! ✅";
+                resDiv.classList.add('bg-green-50', 'text-green-600');
+                document.getElementById('testText').value = "";
+            } else {
+                resDiv.innerText = data.message || "Failed to send";
+                resDiv.classList.add('bg-red-50', 'text-red-600');
+            }
+        } catch(e) {
+            resDiv.innerText = "Network Error";
+            resDiv.classList.remove('hidden');
+            resDiv.classList.add('bg-red-50', 'text-red-600');
+        }
+        btn.innerHTML = 'Send Now';
+    }
+
+    // --- Polling & UI Update ---
     async function checkStatus() {
         try {
             let res = await fetch('/api/status');
             let data = await res.json();
             
+            // Update Headers & Docs
+            document.getElementById('global-server-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+            document.getElementById('global-server-text').innerText = "Server Online";
+            document.getElementById('stat-endpoint').innerText = data.endpoint || "-";
+            document.getElementById('docs-endpoint').innerText = data.endpoint || "https://your-server/api/send";
+
+            let tblBadge = document.getElementById('tbl-status-badge');
+            let qrStatusMsg = document.getElementById('qr-status-msg');
+
             if (data.status === "Connected") {
-                // Login hide, Dashboard show
-                document.getElementById('login-section').style.display = "none";
-                document.getElementById('dashboard-section').style.display = "block";
-                document.getElementById('endpoint-url').innerText = data.endpoint;
+                document.getElementById('stat-active').innerText = "1";
+                
+                // Update Table Badge
+                tblBadge.innerHTML = '<i class="fa-solid fa-check-circle"></i> Connected';
+                tblBadge.className = "px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm flex inline-flex items-center gap-1.5 w-max";
+                
+                // Update QR Box
+                qrStatusMsg.innerHTML = '<i class="fa-solid fa-shield-check"></i> Account Synced';
+                qrStatusMsg.className = "text-xs font-bold text-emerald-600 mt-4 bg-emerald-50 py-1.5 px-3 rounded-lg inline-block";
+                if(qrCodeObj) { qrCodeObj.clear(); document.getElementById('qrcode').innerHTML = '<div class="w-[160px] h-[160px] bg-slate-100 flex items-center justify-center text-emerald-500 text-5xl rounded-lg"><i class="fa-brands fa-whatsapp"></i></div>'; }
+                
             } else if (data.status === "QR_Ready" && data.qr) {
+                document.getElementById('stat-active').innerText = "0";
+                
+                // Update Table Badge
+                tblBadge.innerHTML = '<i class="fa-solid fa-qrcode"></i> Scan Required';
+                tblBadge.className = "px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 shadow-sm flex inline-flex items-center gap-1.5 w-max";
+                
+                // Update QR Box
+                qrStatusMsg.innerHTML = "Scan this QR via WhatsApp";
+                qrStatusMsg.className = "text-xs font-bold text-indigo-600 mt-4 bg-indigo-50 py-1.5 px-3 rounded-lg inline-block";
+                
                 let qrEl = document.getElementById('qrcode');
                 if (!qrCodeObj) {
                     qrEl.innerHTML = "";
-                    qrCodeObj = new QRCode(qrEl, { text: data.qr, width: 220, height: 220 });
+                    qrCodeObj = new QRCode(qrEl, { text: data.qr, width: 160, height: 160, colorDark: "#1e293b", colorLight: "#ffffff" });
                 } else {
                     qrCodeObj.clear();
                     qrCodeObj.makeCode(data.qr);
                 }
             }
-        } catch (error) {
-            console.log("Waiting for server...");
+        } catch (e) { 
+            document.getElementById('global-server-dot').className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse";
+            document.getElementById('global-server-text').innerText = "Backend Offline";
         }
     }
 
-    setInterval(checkStatus, 3000); 
-    checkStatus();
+    function startStatusEngine() {
+        checkStatus();
+        setInterval(checkStatus, 4000); // Poll every 4 seconds to save resources
+    }
 </script>
-
 </body>
 </html>

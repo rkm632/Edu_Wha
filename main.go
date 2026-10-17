@@ -92,7 +92,6 @@ func main() {
 			return
 		}
 
-		// FIXED: Yahan context.Background() pehle parameter me add kar diya gaya hai
 		code, err := client.PairPhone(context.Background(), req.Phone, true, whatsmeow.PairClientChrome, "Chrome (Windows)")
 		if err != nil {
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -101,8 +100,20 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"code": code})
 	})
 
-	// 4. Message Send API
+	// 4. Message Send API (CORS FIX KE SATH)
 	http.HandleFunc("/api/send", func(w http.ResponseWriter, r *http.Request) {
+		// --- CORS FIX START ---
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Kisi bhi website ko allow karna
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Agar browser check karne ke liye preflight (OPTIONS) bheje, to use OK bol do
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		// --- CORS FIX END ---
+
 		w.Header().Set("Content-Type", "application/json")
 		var req struct {
 			Phone   string `json:"phone"`

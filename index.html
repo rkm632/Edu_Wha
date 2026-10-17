@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Gateway</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        h2 { color: #075e54; }
+        #status { font-weight: bold; margin-bottom: 20px; color: #555; }
+        #qrcode { margin: 20px auto; display: flex; justify-content: center; }
+        .connected { color: green !important; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>WhatsApp Server</h2>
+    <div id="status">Loading status...</div>
+    <div id="qrcode"></div>
+</div>
+
+<script>
+    let qrCodeObj = null;
+
+    async function checkStatus() {
+        try {
+            let res = await fetch('/api/status');
+            let data = await res.json();
+            let statusEl = document.getElementById('status');
+            let qrEl = document.getElementById('qrcode');
+
+            if (data.status === "Connected") {
+                statusEl.innerHTML = "<span class='connected'>✅ WhatsApp is Connected!</span>";
+                qrEl.innerHTML = ""; 
+            } else if (data.status === "QR_Ready" && data.qr) {
+                statusEl.innerText = "Please scan the QR code to login:";
+                if (!qrCodeObj) {
+                    qrEl.innerHTML = "";
+                    qrCodeObj = new QRCode(qrEl, { text: data.qr, width: 250, height: 250 });
+                } else {
+                    qrCodeObj.clear();
+                    qrCodeObj.makeCode(data.qr);
+                }
+            } else {
+                statusEl.innerText = "Starting server, please wait...";
+            }
+        } catch (error) {
+            document.getElementById('status').innerText = "Connecting to server...";
+        }
+    }
+
+    setInterval(checkStatus, 3000); // Har 3 second me status update hoga
+    checkStatus();
+</script>
+
+</body>
+</html>

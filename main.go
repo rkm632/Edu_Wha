@@ -20,13 +20,13 @@ func main() {
 	// 1. Database setup
 	dbLog := waLog.Stdout("Database", "ERROR", true)
 	
-	// NAYE UPDATE KE HISAB SE YAHAN '1' (maxConnections) ADD KIYA GAYA HAI
-	container, err := sqlstore.New("sqlite", "file:store.db?_pragma=foreign_keys(1)", 1, dbLog)
+	// FIXED: Naye update ke hisaab se 'context.Background()' ko pehle argument par set kiya aur '1' hata diya
+	container, err := sqlstore.New(context.Background(), "sqlite", "file:store.db?_pragma=foreign_keys(1)", dbLog)
 	if err != nil {
 		panic(err)
 	}
 
-	// NAYE UPDATE KE HISAB SE YAHAN 'context.Background()' ADD KIYA GAYA HAI
+	// FIXED: Yahan bhi context pass kar diya gaya hai
 	deviceStore, err := container.GetFirstDevice(context.Background())
 	if err != nil {
 		panic(err)

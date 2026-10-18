@@ -3,167 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EdutaAI SaaS - WhatsApp Automation</title>
+    <title>EdutaAI - WhatsApp Marketing & Automation SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .gradient-btn { background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; }
-        .gradient-btn:hover { background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%); }
-        .tab-btn.active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: bold; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .grad-btn { background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); }
+        .nav-active { background: #4f46e5; color: #fff !important; box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.5); }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- ==========================================
-         1. LOGIN SCREEN
-    =========================================== -->
-    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-95">
-        <div class="bg-white p-8 md:p-10 rounded-2xl shadow-2xl w-11/12 md:w-96 text-center">
-            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                <i class="fa-brands fa-whatsapp"></i>
+    <!-- LOGIN OVERLAY -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl shadow-inner">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-800">EdutaAI Cloud</h2>
+                <p class="text-slate-500 text-xs mt-1">Multi-Tenant WhatsApp Marketing & AI Gateway</p>
             </div>
-            <h2 class="text-2xl font-bold mb-6 text-slate-800">EdutaAI Login</h2>
-            <input type="text" id="loginUser" placeholder="Username" class="w-full px-4 py-3 mb-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="loginPass" placeholder="Password" class="w-full px-4 py-3 mb-6 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button onclick="doLogin()" class="w-full gradient-btn font-bold py-3 rounded-xl shadow-lg transition">Login to Dashboard</button>
-            <p id="login-error" class="text-red-500 text-sm mt-4 hidden font-medium"></p>
+            <div class="space-y-4">
+                <input type="text" id="loginUser" placeholder="Username (e.g. admin)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="password" id="loginPass" placeholder="Password" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <button onclick="doLogin()" class="w-full grad-btn text-white font-bold py-3.5 rounded-xl shadow-lg transition">Login to Workspace</button>
+                <p id="login-error" class="text-red-500 text-xs text-center font-bold hidden bg-red-50 p-2.5 rounded-lg"></p>
+            </div>
         </div>
     </div>
 
-    <!-- ==========================================
-         2. SIDEBAR (Responsive)
-    =========================================== -->
-    <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl z-20 hidden md:flex" id="sidebar">
-        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
-            <i class="fa-brands fa-whatsapp text-green-400 text-2xl"></i>
-            <h1 class="text-xl font-bold text-white">Eduta<span class="text-blue-400">AI</span></h1>
+    <!-- MOBILE HEADER -->
+    <div class="md:hidden bg-slate-900 text-white px-4 py-3 flex justify-between items-center z-30">
+        <div class="flex items-center gap-2">
+            <i class="fa-brands fa-whatsapp text-emerald-400 text-2xl"></i>
+            <span class="font-extrabold text-lg">EdutaAI</span>
         </div>
-        <div class="p-4 bg-slate-800 text-sm font-semibold text-center border-b border-slate-700">
-            Role: <span id="user-role-badge" class="text-white uppercase">User</span>
+        <button onclick="toggleSidebar()" class="text-xl p-2 bg-slate-800 rounded-lg"><i class="fa-solid fa-bars"></i></button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-72 bg-slate-900 text-slate-300 flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
+        <div class="p-6 border-b border-slate-800 hidden md:flex items-center gap-3">
+            <i class="fa-brands fa-whatsapp text-emerald-400 text-3xl"></i>
+            <div>
+                <h1 class="text-xl font-extrabold text-white">Eduta<span class="text-emerald-400">AI</span></h1>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">SaaS Automation</p>
+            </div>
         </div>
-        <nav class="flex-1 p-4 space-y-2" id="nav-menu">
-            <!-- Navigation links injected via JS based on role -->
+
+        <!-- Active Instance Selector (Admin can switch between library accounts!) -->
+        <div class="p-4 bg-slate-950/60 border-b border-slate-800">
+            <label class="text-[11px] uppercase font-bold text-slate-400 block mb-1">Active Account / Instance</label>
+            <div class="flex items-center justify-between bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
+                <span id="active-instance-label" class="font-bold text-white text-sm truncate">admin</span>
+                <span id="role-badge" class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-bold uppercase">USER</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto text-sm font-semibold">
+            <button onclick="switchTab('connect')" id="nav-connect" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 nav-active">
+                <i class="fa-solid fa-qrcode w-5"></i> Device & API Link
+            </button>
+            <button onclick="switchTab('chat')" id="nav-chat" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800">
+                <i class="fa-solid fa-comments w-5"></i> Live Chat (Zero-Load)
+            </button>
+            <button onclick="switchTab('bulk')" id="nav-bulk" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800">
+                <i class="fa-solid fa-paper-plane w-5"></i> Bulk & Anti-Ban
+            </button>
+            <button onclick="switchTab('catalog')" id="nav-catalog" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800">
+                <i class="fa-solid fa-images w-5"></i> Product Images (Neon)
+            </button>
+            <button onclick="switchTab('ai')" id="nav-ai" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800">
+                <i class="fa-solid fa-robot w-5"></i> AI Lead-Gen Bot
+            </button>
+            <button onclick="switchTab('admin')" id="nav-admin" class="hidden w-full flex items-center gap-3 px-4 py-3 rounded-xl text-amber-400 hover:bg-slate-800 border border-amber-500/20 mt-4">
+                <i class="fa-solid fa-crown w-5"></i> Admin: Manage Users
+            </button>
         </nav>
-        <button onclick="logout()" class="m-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition font-bold"><i class="fa-solid fa-power-off mr-2"></i> Logout</button>
+
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="logout()" class="w-full py-2.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl font-bold text-sm transition">
+                <i class="fa-solid fa-power-off mr-1"></i> Logout
+            </button>
+        </div>
     </aside>
 
-    <!-- Mobile Header -->
-    <div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center z-20">
-        <h1 class="text-lg font-bold">EdutaAI</h1>
-        <button onclick="document.getElementById('sidebar').classList.toggle('hidden')" class="text-2xl"><i class="fa-solid fa-bars"></i></button>
-    </div>
-
-    <!-- ==========================================
-         3. MAIN CONTENT AREA
-    =========================================== -->
-    <main class="flex-1 bg-slate-50 overflow-y-auto p-4 md:p-8">
-        
-        <!-- ADMIN VIEW: User Management -->
-        <div id="view-admin" class="hidden space-y-6">
-            <h2 class="text-2xl font-bold text-slate-800 border-b pb-4">Master Admin Panel</h2>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-lg mb-4 text-blue-600"><i class="fa-solid fa-user-plus"></i> Create New Client Account</h3>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <input type="text" id="newUserName" placeholder="Client Username" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    <input type="password" id="newUserPass" placeholder="Client Password" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    <button onclick="createUser()" class="gradient-btn px-6 py-2 rounded-lg font-bold shadow">Create User</button>
-                </div>
+    <!-- MAIN WORKSPACE -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+        <!-- STATUS BAR -->
+        <header class="bg-white border-b border-slate-200 px-4 md:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <h2 id="page-title" class="text-lg md:text-xl font-extrabold text-slate-800">Device & API Connection</h2>
+                <p class="text-xs text-slate-500">Managing WhatsApp session for: <b id="header-instance" class="text-indigo-600">admin</b></p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-lg mb-4 text-red-600"><i class="fa-solid fa-user-minus"></i> Delete Client</h3>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <input type="text" id="delUserName" placeholder="Username to delete" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-                    <button onclick="deleteUser()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-bold shadow">Delete User</button>
-                </div>
+            <div class="flex items-center gap-3">
+                <span id="wa-status-pill" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                    <i class="fa-solid fa-spinner fa-spin mr-1"></i> Checking...
+                </span>
+                <button onclick="logoutWhatsApp()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg border border-red-200">
+                    Unlink WA
+                </button>
             </div>
-        </div>
+        </header>
 
-        <!-- USER VIEW: Client Dashboard -->
-        <div id="view-user" class="hidden space-y-6">
-            
-            <!-- Connection Status Card -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Your WhatsApp Engine</h2>
-                    <p class="text-slate-500 text-sm mt-1">Connect device to start sending messages.</p>
+        <!-- CONTENT SCROLL AREA -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+
+            <!-- 1. CONNECT & API TAB -->
+            <div id="tab-connect" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center">
+                        <h3 class="font-bold text-slate-800 mb-1">Method 1: Scan QR Code</h3>
+                        <p class="text-xs text-slate-500 mb-4">Open WhatsApp > Linked Devices > Link a Device</p>
+                        <div id="qrcode" class="flex justify-center bg-slate-50 p-4 rounded-xl border border-slate-100 min-h-[190px] items-center"></div>
+                        <p id="qr-helper" class="text-xs font-bold text-indigo-600 mt-3">Waiting for QR stream...</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center">
+                        <h3 class="font-bold text-slate-800 mb-1 text-center">Method 2: Phone Pairing Code</h3>
+                        <p class="text-xs text-slate-500 mb-4 text-center">Bina QR scan kiye 8-digit code se login karein</p>
+                        <input type="text" id="pairPhoneInput" placeholder="919876543210 (With Country Code)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl mb-3 text-center font-mono font-bold">
+                        <button onclick="requestPairCode()" class="grad-btn text-white font-bold py-3 rounded-xl shadow">Get 8-Digit Code</button>
+                        <div id="pair-code-box" class="hidden mt-4 text-center text-2xl font-black tracking-widest bg-indigo-50 text-indigo-700 py-3 rounded-xl border border-indigo-200"></div>
+                    </div>
                 </div>
-                <span id="wa-status-badge" class="px-4 py-2 bg-yellow-100 text-yellow-700 font-bold rounded-full text-sm border border-yellow-200">Checking...</span>
-            </div>
 
-            <!-- TABS -->
-            <div class="flex gap-6 border-b border-slate-200 px-2 overflow-x-auto">
-                <button onclick="openUserTab('connect')" id="tab-connect" class="tab-btn active pb-3 text-slate-500 font-medium whitespace-nowrap"><i class="fa-solid fa-link"></i> Connection</button>
-                <button onclick="openUserTab('bulk')" id="tab-bulk" class="tab-btn pb-3 text-slate-500 font-medium whitespace-nowrap"><i class="fa-solid fa-paper-plane"></i> Bulk Sender</button>
-                <button onclick="openUserTab('ai')" id="tab-ai" class="tab-btn pb-3 text-slate-500 font-medium whitespace-nowrap"><i class="fa-solid fa-robot"></i> AI Auto-Reply</button>
-            </div>
-
-            <!-- TAB 1: CONNECT -->
-            <div id="content-connect" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="text-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
-                    <p class="font-bold text-slate-700 mb-2">Scan QR Code</p>
-                    <div id="qrcode" class="flex justify-center bg-white p-2 rounded shadow inline-block"></div>
-                </div>
-                <div class="text-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex flex-col justify-center">
-                    <p class="font-bold text-slate-700 mb-4">Pair with Phone Number</p>
-                    <input type="text" id="phoneCodeInput" placeholder="919876543210" class="w-full px-4 py-2 border rounded-lg mb-4 text-center">
-                    <button onclick="getPairingCode()" class="bg-slate-800 text-white py-2 rounded-lg font-bold">Generate 8-Digit Code</button>
-                    <p id="pair-code-display" class="mt-4 text-2xl font-black tracking-widest text-blue-600 hidden"></p>
+                <!-- Developer API Box for Supabase / Library Software -->
+                <div class="bg-slate-900 text-slate-200 p-6 rounded-2xl shadow-sm">
+                    <h3 class="font-bold text-white mb-2"><i class="fa-solid fa-code text-emerald-400 mr-2"></i>External Integration Endpoint (For Library App / Supabase)</h3>
+                    <p class="text-xs text-slate-400 mb-3">Apne library software se direct message ya image bhejne ke liye is JSON body ka use karein:</p>
+                    <pre class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto">POST <span id="api-url-display">https://your-app.onrender.com/api/send</span>
+{
+  "username": "<span id="api-user-display">admin</span>",
+  "phone": "917007849080",
+  "message": "Dear Student, your library fee is due.",
+  "image_url": "https://optional-neon-bucket-image-url.jpg"
+}</pre>
                 </div>
             </div>
 
-            <!-- TAB 2: BULK SENDER -->
-            <div id="content-bulk" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-lg text-slate-800">Bulk Message Engine</h3>
-                    <label class="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                        <input type="checkbox" id="antiBanToggle" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" checked>
-                        <span class="text-sm font-bold text-slate-700">Anti-Ban Safe Mode (Delay)</span>
+            <!-- 2. CLIENT-SIDE LIVE CHAT TAB (ZERO SERVER LOAD) -->
+            <div id="tab-chat" class="hidden h-[75vh] bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row overflow-hidden">
+                <!-- Contact List -->
+                <div class="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col">
+                    <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                        <span class="font-bold text-xs uppercase text-slate-500">Client-Side Chats (RAM/Local)</span>
+                        <button onclick="startNewChatPrompt()" class="text-xs bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold">+ New</button>
+                    </div>
+                    <div id="chat-contacts" class="flex-1 overflow-y-auto divide-y divide-slate-100"></div>
+                </div>
+                <!-- Chat Messages Area -->
+                <div class="flex-1 flex flex-col bg-slate-50">
+                    <div id="chat-header" class="p-3.5 bg-white border-b border-slate-200 font-bold text-sm text-slate-700">Select a contact to chat</div>
+                    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
+                    <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
+                        <input type="text" id="manualChatInput" placeholder="Type a manual reply..." class="flex-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none">
+                        <button onclick="sendManualChat()" class="grad-btn text-white px-5 py-2.5 rounded-xl font-bold text-sm"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. BULK SENDER & ANTI-BAN TAB -->
+            <div id="tab-bulk" class="hidden space-y-6">
+                <!-- Anti-Ban Education Card -->
+                <div class="bg-indigo-50 border border-indigo-200 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h4 class="font-extrabold text-indigo-950 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-indigo-600"></i> Smart Anti-Ban Engine kaise kaam karta hai?
+                        </h4>
+                        <p class="text-xs text-indigo-800 mt-1 leading-relaxed">
+                            Jab aap <b>Anti-Ban ON</b> rakhte hain, to hamara Go server har message ke beech <b>3 se 8 second ka random human-like gap</b> leta hai. Isse WhatsApp ke spam filter ko lagta hai ki koi insaan manually message type kar raha hai aur aapka number safe rehta hai. (Fast mode me bina delay ke message jayenge, jisme risk aapka hoga).
+                        </p>
+                    </div>
+                    <label class="flex items-center gap-2.5 bg-white px-4 py-2.5 rounded-xl border border-indigo-200 shadow-sm cursor-pointer shrink-0">
+                        <input type="checkbox" id="bulkAntiBan" checked class="w-4 h-4 accent-indigo-600">
+                        <span class="text-xs font-extrabold text-slate-800">Anti-Ban Safe Mode</span>
                     </label>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Numbers (One per line with country code)</label>
-                        <textarea id="bulkNumbers" rows="6" class="w-full px-4 py-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-blue-500" placeholder="919999999999&#10;918888888888"></textarea>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Target Numbers (Har line me 1 number, 91 ke sath)</label>
+                            <textarea id="bulkPhones" rows="6" placeholder="917007849080&#10;919876543210" class="w-full p-3 bg-slate-50 border rounded-xl text-sm font-mono"></textarea>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Campaign Message / Caption</label>
+                                <textarea id="bulkText" rows="3" placeholder="Special Offer! Check out our new library plans..." class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Optional Product Image URL (From Neon Storage)</label>
+                                <input type="text" id="bulkImageURL" placeholder="https://... (Leave empty for text-only)" class="w-full p-2.5 bg-slate-50 border rounded-xl text-sm">
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Message Content</label>
-                        <textarea id="bulkMessage" rows="6" class="w-full px-4 py-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-blue-500" placeholder="Hello, your library fees is due..."></textarea>
-                    </div>
+                    <button onclick="startBulkCampaign()" class="w-full grad-btn text-white font-bold py-3.5 rounded-xl shadow-lg">🚀 Launch Bulk Campaign</button>
                 </div>
-                <button onclick="sendBulk()" class="w-full mt-6 gradient-btn font-bold py-3 rounded-xl shadow">🚀 Start Sending Campaign</button>
             </div>
 
-            <!-- TAB 3: AI CHATBOT -->
-            <div id="content-ai" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-lg text-slate-800">Personalized Business AI (Lead Gen)</h3>
-                    <label class="flex items-center gap-2 cursor-pointer bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
-                        <input type="checkbox" id="aiToggle" class="w-4 h-4 text-green-600 rounded focus:ring-green-500">
-                        <span class="text-sm font-bold text-green-700">Enable Auto-Reply</span>
-                    </label>
+            <!-- 4. PRODUCT IMAGE CATALOG (NEON OBJECT STORAGE JUGAAD) -->
+            <div id="tab-catalog" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-1">Add Product Image (Neon Bucket / Public Link)</h3>
+                    <p class="text-xs text-slate-500 mb-4">Apne Neon Object Storage ke public image URLs yahan save karein taaki Bulk Sender ya AI Bot unhe direct customers ko bhej sake.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="text" id="mediaTitle" placeholder="Product Name (e.g. Red Shoes)" class="px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+                        <input type="text" id="mediaURL" placeholder="Public Image URL (https://...)" class="px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+                        <input type="text" id="mediaCaption" placeholder="Price / Short Details" class="px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+                    </div>
+                    <button onclick="saveMediaItem()" class="mt-3 grad-btn text-white px-6 py-2.5 rounded-xl font-bold text-sm">Save to Catalog</button>
                 </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">Select AI Provider</label>
-                        <select id="aiProvider" class="w-full px-4 py-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500">
-                            <option value="groq">Groq (Ultra-Fast)</option>
-                            <option value="gemini">Google Gemini</option>
-                            <option value="openai">ChatGPT (OpenAI)</option>
-                            <option value="deepseek">DeepSeek</option>
-                        </select>
+
+                <div id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- 5. AI AUTO-REPLY & SLIDING WINDOW BOT -->
+            <div id="tab-ai" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800">AI Lead Generation & Auto-Reply Bot</h3>
+                            <p class="text-xs text-slate-500">In-Memory 10-Message Sliding Window enabled (AI pichli baatein yaad rakhega bina server slow kiye)</p>
+                        </div>
+                        <label class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl cursor-pointer">
+                            <input type="checkbox" id="aiAutoToggle" class="w-4 h-4 accent-emerald-600">
+                            <span class="text-xs font-extrabold text-emerald-800">Enable AI Auto-Reply</span>
+                        </label>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">API Key</label>
-                        <input type="password" id="aiKey" placeholder="sk-..." class="w-full px-4 py-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Choose AI Provider</label>
+                            <select id="aiProviderSelect" class="w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm font-semibold">
+                                <option value="groq">Groq (Llama-3.3-70B - Ultra Fast)</option>
+                                <option value="gemini">Google Gemini (Gemini 1.5 Flash)</option>
+                                <option value="openai">OpenAI (ChatGPT-4o-mini)</option>
+                                <option value="deepseek">DeepSeek Chat</option>
+                                <option value="openrouter">OpenRouter (Free/Custom Models)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Provider API Key</label>
+                            <input type="password" id="aiApiKeyInput" placeholder="gsk_... / AIza... / sk-..." class="w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm font-mono">
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">Business System Prompt (Train your AI)</label>
-                        <textarea id="aiPrompt" rows="4" class="w-full px-4 py-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-blue-500" placeholder="You are an assistant for 'Eduta Library'. Our timing is 8 AM to 10 PM. Fees is Rs 500/month. Your goal is to collect user's name and phone number for leads."></textarea>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Business Personalization & Lead-Gen Prompt</label>
+                        <textarea id="aiSystemPrompt" rows="5" placeholder="Tum 'Eduta Library' ke smart manager ho. Timing: 7 AM - 10 PM, Fee: 600/month. Customer ka naam aur mobile number puch kar lead generate karo. Agar customer seat ki photo mange to reply ke end me [IMAGE: https://your-neon-url/seat.jpg] likho." class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
                     </div>
-                    <button onclick="saveAISettings()" class="w-full gradient-btn font-bold py-3 rounded-xl shadow">Save AI Configuration</button>
+
+                    <button onclick="saveAIConfig()" class="w-full grad-btn text-white font-bold py-3.5 rounded-xl shadow-lg">💾 Save AI Configuration</button>
+                </div>
+            </div>
+
+            <!-- 6. ADMIN: MULTI-USER & LIBRARY INSTANCE MANAGER -->
+            <div id="tab-admin" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-user-plus text-indigo-600 mr-1"></i> Create New Library Owner / SaaS Client</h3>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="newClientUser" placeholder="Username / Library ID (e.g. lib_kanpur_1)" class="flex-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+                        <input type="text" id="newClientPass" placeholder="Password" class="flex-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+                        <button onclick="createClientUser()" class="grad-btn text-white px-6 py-2.5 rounded-xl font-bold text-sm">Create Account</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-sm text-slate-700">All Hosted Accounts (Click "Manage" to control their WhatsApp)</h3>
+                        <button onclick="loadAdminUsers()" class="text-xs text-indigo-600 font-bold"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-xs uppercase text-slate-500 border-b">
+                                <tr>
+                                    <th class="p-3.5">Username / ID</th>
+                                    <th class="p-3.5">Role</th>
+                                    <th class="p-3.5">WA Status</th>
+                                    <th class="p-3.5">AI Bot</th>
+                                    <th class="p-3.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-tbody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -171,93 +298,311 @@
     </main>
 
 <script>
-    let token = localStorage.getItem('token');
-    let role = localStorage.getItem('role');
-    let username = localStorage.getItem('username');
+    let currentUser = localStorage.getItem('username') || '';
+    let currentRole = localStorage.getItem('role') || '';
+    let activeInstance = currentUser; // Admin can switch this to manage any library account!
+    let qrObj = null;
+    let activeChatPhone = '';
+    let chatStore = JSON.parse(localStorage.getItem('eduta_client_chats') || '{}');
+    let sseSource = null;
 
-    // Init Logic
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+
     window.onload = () => {
-        if(token) {
+        if (localStorage.getItem('token') && currentUser) {
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('user-role-badge').innerText = role;
-            setupNavigation();
+            initWorkspace();
         }
-    }
+    };
 
-    // --- Authentication ---
     async function doLogin() {
-        let u = document.getElementById('loginUser').value;
-        let p = document.getElementById('loginPass').value;
-        try {
-            let res = await fetch('/api/login', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
-            let data = await res.json();
-            if(data.status === 'success') {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('role', data.role);
-                localStorage.setItem('username', u);
-                window.location.reload();
-            } else {
-                let err = document.getElementById('login-error');
-                err.innerText = data.message;
-                err.classList.remove('hidden');
-            }
-        } catch(e) { alert("Server Error"); }
-    }
-
-    function logout() {
-        localStorage.clear();
-        window.location.reload();
-    }
-
-    function setupNavigation() {
-        let nav = document.getElementById('nav-menu');
-        if(role === 'admin') {
-            document.getElementById('view-admin').classList.remove('hidden');
-            nav.innerHTML = '<a href="#" class="block px-4 py-3 bg-blue-600 text-white rounded-lg font-bold"><i class="fa-solid fa-users mr-2"></i> Client Management</a>';
+        let u = document.getElementById('loginUser').value.trim();
+        let p = document.getElementById('loginPass').value.trim();
+        let res = await fetch('/api/login', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
+        let data = await res.json();
+        if (data.status === 'success') {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('role', data.role);
+            localStorage.setItem('ai_provider', data.ai_provider || 'groq');
+            localStorage.setItem('api_key', data.api_key || '');
+            localStorage.setItem('system_prompt', data.system_prompt || '');
+            localStorage.setItem('auto_reply', data.auto_reply ? 'true' : 'false');
+            window.location.reload();
         } else {
-            document.getElementById('view-user').classList.remove('hidden');
-            nav.innerHTML = '<a href="#" class="block px-4 py-3 bg-blue-600 text-white rounded-lg font-bold"><i class="fa-solid fa-gauge mr-2"></i> Automation Dashboard</a>';
-            // Start user status check
+            let err = document.getElementById('login-error');
+            err.innerText = data.message || 'Login failed';
+            err.classList.remove('hidden');
         }
     }
 
-    // --- Admin Functions ---
-    async function createUser() {
-        let u = document.getElementById('newUserName').value;
-        let p = document.getElementById('newUserPass').value;
-        let res = await fetch('/api/admin/create-user', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
-        let data = await res.json();
-        alert(data.message || data.error);
+    function logout() { localStorage.clear(); window.location.reload(); }
+
+    function initWorkspace() {
+        activeInstance = currentUser;
+        document.getElementById('active-instance-label').innerText = activeInstance;
+        document.getElementById('header-instance').innerText = activeInstance;
+        document.getElementById('api-user-display').innerText = activeInstance;
+        document.getElementById('role-badge').innerText = currentRole;
+
+        // Pre-fill AI Settings
+        document.getElementById('aiProviderSelect').value = localStorage.getItem('ai_provider') || 'groq';
+        document.getElementById('aiApiKeyInput').value = localStorage.getItem('api_key') || '';
+        document.getElementById('aiSystemPrompt').value = localStorage.getItem('system_prompt') || '';
+        document.getElementById('aiAutoToggle').checked = localStorage.getItem('auto_reply') === 'true';
+
+        if (currentRole === 'admin') {
+            document.getElementById('nav-admin').classList.remove('hidden');
+            loadAdminUsers();
+        }
+
+        pollStatus();
+        setInterval(pollStatus, 4000);
+        connectLiveChatStream();
+        renderChatContacts();
+        loadMediaCatalog();
     }
 
-    async function deleteUser() {
-        let u = document.getElementById('delUserName').value;
-        let res = await fetch('/api/admin/delete-user', { method: 'POST', body: JSON.stringify({username: u}) });
-        let data = await res.json();
-        alert(data.message || data.error);
-    }
-
-    // --- User Tab Logic ---
-    function openUserTab(tab) {
-        ['connect', 'bulk', 'ai'].forEach(t => {
-            document.getElementById('tab-' + t).classList.remove('active');
-            document.getElementById('content-' + t).classList.add('hidden');
+    function switchTab(tab) {
+        ['connect', 'chat', 'bulk', 'catalog', 'ai', 'admin'].forEach(t => {
+            let el = document.getElementById('tab-' + t);
+            let nav = document.getElementById('nav-' + t);
+            if (el) el.classList.add('hidden');
+            if (nav) nav.classList.remove('nav-active');
         });
-        document.getElementById('tab-' + tab).classList.add('active');
-        document.getElementById('content-' + tab).classList.remove('hidden');
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        document.getElementById('nav-' + tab).classList.add('nav-active');
+        if (window.innerWidth < 768) toggleSidebar();
     }
 
-    async function saveAISettings() {
+    // --- Status & QR Polling ---
+    async function pollStatus() {
+        try {
+            let res = await fetch('/api/status?username=' + encodeURIComponent(activeInstance));
+            let data = await res.json();
+            document.getElementById('api-url-display').innerText = data.endpoint;
+
+            let pill = document.getElementById('wa-status-pill');
+            let qrBox = document.getElementById('qrcode');
+            let helper = document.getElementById('qr-helper');
+
+            if (data.status === 'Connected') {
+                pill.className = "px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200";
+                pill.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Connected (${data.jid || 'Active'})`;
+                qrBox.innerHTML = `<div class="text-emerald-500 text-center"><i class="fa-brands fa-whatsapp text-6xl mb-2"></i><p class="text-xs font-bold text-slate-600">WhatsApp Linked!</p></div>`;
+                qrObj = null;
+                helper.innerText = "Device is online and ready.";
+            } else if (data.status === 'QR_Ready' && data.qr) {
+                pill.className = "px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200";
+                pill.innerHTML = `<i class="fa-solid fa-qrcode mr-1"></i> Scan QR`;
+                helper.innerText = "Scan this QR code from WhatsApp";
+                if (!qrObj) {
+                    qrBox.innerHTML = "";
+                    qrObj = new QRCode(qrBox, { text: data.qr, width: 170, height: 170 });
+                } else {
+                    qrObj.clear();
+                    qrObj.makeCode(data.qr);
+                }
+            } else {
+                pill.innerHTML = "Connecting...";
+            }
+        } catch (e) {}
+    }
+
+    async function requestPairCode() {
+        let phone = document.getElementById('pairPhoneInput').value.trim();
+        if (!phone) return alert("Enter phone number with country code!");
+        let box = document.getElementById('pair-code-box');
+        box.innerText = "Generating...";
+        box.classList.remove('hidden');
+        let res = await fetch('/api/pair', { method: 'POST', body: JSON.stringify({username: activeInstance, phone: phone}) });
+        let data = await res.json();
+        box.innerText = data.code || data.error || "Error";
+    }
+
+    async function logoutWhatsApp() {
+        if (!confirm("Unlink WhatsApp session for " + activeInstance + "?")) return;
+        await fetch('/api/logout-wa', { method: 'POST', body: JSON.stringify({username: activeInstance}) });
+        pollStatus();
+    }
+
+    // --- Client-Side Live Chat (SSE) ---
+    function connectLiveChatStream() {
+        if (sseSource) sseSource.close();
+        sseSource = new EventSource('/api/chat/stream?username=' + encodeURIComponent(activeInstance));
+        sseSource.onmessage = (e) => {
+            let msg = JSON.parse(e.data);
+            if (!msg.phone) return;
+            if (!chatStore[msg.phone]) chatStore[msg.phone] = [];
+            chatStore[msg.phone].push(msg);
+            if (chatStore[msg.phone].length > 40) chatStore[msg.phone].shift();
+            localStorage.setItem('eduta_client_chats', JSON.stringify(chatStore));
+            renderChatContacts();
+            if (activeChatPhone === msg.phone) renderChatMessages(msg.phone);
+        };
+    }
+
+    function renderChatContacts() {
+        let container = document.getElementById('chat-contacts');
+        container.innerHTML = '';
+        Object.keys(chatStore).forEach(phone => {
+            let list = chatStore[phone];
+            let last = list[list.length - 1] || {text: ''};
+            let div = document.createElement('div');
+            div.className = `p-3 cursor-pointer hover:bg-indigo-50 transition ${activeChatPhone === phone ? 'bg-indigo-50 font-bold' : ''}`;
+            div.onclick = () => { activeChatPhone = phone; renderChatMessages(phone); renderChatContacts(); };
+            div.innerHTML = `<div class="text-sm text-slate-800">+${phone}</div><div class="text-xs text-slate-400 truncate">${last.text}</div>`;
+            container.appendChild(div);
+        });
+    }
+
+    function renderChatMessages(phone) {
+        document.getElementById('chat-header').innerText = "Chatting with +" + phone;
+        let box = document.getElementById('chat-messages');
+        box.innerHTML = '';
+        (chatStore[phone] || []).forEach(m => {
+            let isIn = m.type === 'incoming';
+            let bubble = document.createElement('div');
+            bubble.className = `max-w-[75%] p-3 rounded-2xl text-xs ${isIn ? 'bg-white border self-start text-slate-800' : 'bg-indigo-600 text-white self-end ml-auto'}`;
+            bubble.innerHTML = `<div>${m.text}</div><div class="text-[10px] opacity-70 mt-1 text-right">${m.time || ''} ${m.type === 'outgoing_ai' ? '🤖 AI' : ''}</div>`;
+            box.appendChild(bubble);
+        });
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function startNewChatPrompt() {
+        let p = prompt("Enter customer phone with country code (e.g. 917007849080):");
+        if (!p) return;
+        if (!chatStore[p]) chatStore[p] = [];
+        activeChatPhone = p;
+        renderChatContacts();
+        renderChatMessages(p);
+    }
+
+    async function sendManualChat() {
+        let text = document.getElementById('manualChatInput').value.trim();
+        if (!activeChatPhone || !text) return;
+        document.getElementById('manualChatInput').value = '';
+        await fetch('/api/send', { method: 'POST', body: JSON.stringify({username: activeInstance, phone: activeChatPhone, message: text}) });
+    }
+
+    // --- Bulk Campaign ---
+    async function startBulkCampaign() {
+        let rawPhones = document.getElementById('bulkPhones').value.trim();
+        let message = document.getElementById('bulkText').value.trim();
+        let imageURL = document.getElementById('bulkImageURL').value.trim();
+        let useAntiBan = document.getElementById('bulkAntiBan').checked;
+
+        if (!rawPhones || !message) return alert("Numbers aur Message dono likhein!");
+        let phones = rawPhones.split('\n').map(s => s.trim()).filter(Boolean);
+
+        let res = await fetch('/api/bulk', {
+            method: 'POST',
+            body: JSON.stringify({username: activeInstance, phones, message, image_url: imageURL, use_anti_ban: useAntiBan})
+        });
+        let data = await res.json();
+        alert(data.message);
+    }
+
+    // --- Product Media Catalog ---
+    async function saveMediaItem() {
+        let title = document.getElementById('mediaTitle').value.trim();
+        let image_url = document.getElementById('mediaURL').value.trim();
+        let caption = document.getElementById('mediaCaption').value.trim();
+        if (!title || !image_url) return alert("Product Name aur Image URL zaroori hai!");
+
+        await fetch('/api/media', { method: 'POST', body: JSON.stringify({username: activeInstance, title, image_url, caption}) });
+        document.getElementById('mediaTitle').value = '';
+        document.getElementById('mediaURL').value = '';
+        document.getElementById('mediaCaption').value = '';
+        loadMediaCatalog();
+    }
+
+    async function loadMediaCatalog() {
+        let res = await fetch('/api/media?username=' + encodeURIComponent(activeInstance));
+        let data = await res.json();
+        let grid = document.getElementById('catalog-grid');
+        grid.innerHTML = '';
+        (data.media || []).forEach(item => {
+            let card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between";
+            card.innerHTML = `
+                <div>
+                    <img src="${item.image_url}" class="w-full h-36 object-cover rounded-xl mb-3 bg-slate-100" onerror="this.src='https://placehold.co/300x200?text=Image+Link'">
+                    <h4 class="font-bold text-sm text-slate-800">${item.title}</h4>
+                    <p class="text-xs text-slate-500 mb-3">${item.caption || ''}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="navigator.clipboard.writeText('[IMAGE: ${item.image_url}]'); alert('Copied for AI Prompt!');" class="flex-1 bg-indigo-50 text-indigo-600 text-xs font-bold py-2 rounded-lg">Copy AI Tag</button>
+                    <button onclick="document.getElementById('bulkImageURL').value='${item.image_url}'; switchTab('bulk');" class="flex-1 bg-emerald-50 text-emerald-600 text-xs font-bold py-2 rounded-lg">Use in Bulk</button>
+                </div>`;
+            grid.appendChild(card);
+        });
+    }
+
+    // --- AI Settings ---
+    async function saveAIConfig() {
         let payload = {
-            username: username,
-            ai_provider: document.getElementById('aiProvider').value,
-            api_key: document.getElementById('aiKey').value,
-            system_prompt: document.getElementById('aiPrompt').value,
-            auto_reply: document.getElementById('aiToggle').checked
+            username: activeInstance,
+            ai_provider: document.getElementById('aiProviderSelect').value,
+            api_key: document.getElementById('aiApiKeyInput').value.trim(),
+            system_prompt: document.getElementById('aiSystemPrompt').value.trim(),
+            auto_reply: document.getElementById('aiAutoToggle').checked
         };
         let res = await fetch('/api/ai/settings', { method: 'POST', body: JSON.stringify(payload) });
         let data = await res.json();
         alert(data.message);
+    }
+
+    // --- Admin Multi-Account Management ---
+    async function createClientUser() {
+        let u = document.getElementById('newClientUser').value.trim();
+        let p = document.getElementById('newClientPass').value.trim();
+        let res = await fetch('/api/admin/create-user', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
+        let data = await res.json();
+        alert(data.message || data.error);
+        loadAdminUsers();
+    }
+
+    async function loadAdminUsers() {
+        let res = await fetch('/api/admin/users');
+        let data = await res.json();
+        let tbody = document.getElementById('admin-users-tbody');
+        tbody.innerHTML = '';
+        (data.users || []).forEach(u => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-3.5 font-bold text-slate-800">${u.username}</td>
+                <td class="p-3.5 text-xs uppercase font-bold text-slate-500">${u.role}</td>
+                <td class="p-3.5"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${u.status === 'Connected' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${u.status}</span></td>
+                <td class="p-3.5 text-xs">${u.auto_reply ? '🟢 ON' : '⚪ OFF'}</td>
+                <td class="p-3.5 text-right space-x-2">
+                    <button onclick="switchActiveInstance('${u.username}')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Manage WA</button>
+                    ${u.username !== 'admin' ? `<button onclick="deleteClientUser('${u.username}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">Delete</button>` : ''}
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function switchActiveInstance(targetUser) {
+        activeInstance = targetUser;
+        document.getElementById('active-instance-label').innerText = activeInstance;
+        document.getElementById('header-instance').innerText = activeInstance;
+        document.getElementById('api-user-display').innerText = activeInstance;
+        qrObj = null;
+        document.getElementById('qrcode').innerHTML = '';
+        connectLiveChatStream();
+        loadMediaCatalog();
+        pollStatus();
+        switchTab('connect');
+    }
+
+    async function deleteClientUser(u) {
+        if (!confirm("Delete account " + u + "?")) return;
+        await fetch('/api/admin/delete-user', { method: 'POST', body: JSON.stringify({username: u}) });
+        loadAdminUsers();
     }
 </script>
 </body>

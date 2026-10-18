@@ -5,14 +5,11 @@ import (
 	"net/http"
 	"os"
 
-	// Ye aapke naye folders ko import kar raha hai
-	// Dhyan rahe, aapke go.mod me module ka naam "wa-server" hona chahiye
+	"wa-server/api"
 	"wa-server/database"
 	"wa-server/whatsapp"
-	"wa-server/api"
 )
 
-// CORS Middleware (Browser blocks se bachne ke liye)
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -27,38 +24,41 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
-	log.Println("🚀 Starting EdutaAI Enterprise Gateway...")
+	log.Println("🚀 Starting EdutaAI Multi-Tenant SaaS & Marketing Gateway...")
 
-	// 1. Database Start Karein aur API ko DB connection dein
+	// 1. Initialize Neon Postgres Database
 	database.InitDB()
 	api.DB = database.DB
 
-	// 2. WhatsApp Engine Start Karein
+	// 2. Initialize Whatsmeow Multi-Device Store
 	dbURL := os.Getenv("DATABASE_URL")
-	whatsapp.InitStore(dbURL)
+	whatsapp.InitStore(dbURL, database.DB)
 
-	// 3. API Endpoints Routes
-	
-	// Frontend Dashboard (Ab ye public folder se aayega)
+	// 3. Frontend UI Route
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "public/index.html")
 	})
 
-	// User & Admin APIs (handlers.go se link)
+	// 4. API Routes
 	http.HandleFunc("/api/login", corsMiddleware(api.LoginHandler))
+	http.HandleFunc("/api/status", corsMiddleware(api.StatusHandler))
+	http.HandleFunc("/api/pair", corsMiddleware(api.PairPhoneHandler))
+	http.HandleFunc("/api/logout-wa", corsMiddleware(api.LogoutWAHandler))
+	http.HandleFunc("/api/send", corsMiddleware(api.SendHandler))
+	http.HandleFunc("/api/bulk", corsMiddleware(api.BulkSendHandler))
+	http.HandleFunc("/api/ai/settings", corsMiddleware(api.SaveAISettingsHandler))
+	http.HandleFunc("/api/media", corsMiddleware(api.MediaCatalogHandler))
+	http.HandleFunc("/api/chat/stream", api.LiveChatSSEHandler)
+
+	// 5. Admin Multi-Account Routes
+	http.HandleFunc("/api/admin/users", corsMiddleware(api.ListUsersHandler))
 	http.HandleFunc("/api/admin/create-user", corsMiddleware(api.CreateUserHandler))
 	http.HandleFunc("/api/admin/delete-user", corsMiddleware(api.DeleteUserHandler))
-	http.HandleFunc("/api/ai/settings", corsMiddleware(api.SaveAISettingsHandler))
 
-	// 4. Server Port Setup
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	
-	log.Printf("✅ Server is running gracefully on port %s", port)
-	err := http.ListenAndServe(":"+port, nil)
-	if err != nil {
-		log.Fatal("Server Crash Error: ", err)
-	}
+	log.Printf("✅ Server listening on port %s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
